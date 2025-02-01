@@ -1,0 +1,26 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#SamacSys ECAD Model SA5.0A
+#/856075/1452651/2.50/2/4/TVS Diode (Uni-directional)
+DEF SA5.0A D 0 30 Y Y 1 F N
+F0 "D" 400 350 50 H V L BNN
+F1 "SA5.0A" 400 250 50 H V L BNN
+F2 "DIOAD1910W86L670D310" 400 150 50 H I L BNN
+F3 "http://www.littelfuse.com/~/media/electronics/datasheets/tvs_diodes/littelfuse_tvs_diode_sa_datasheet.pdf.pdf" 400 50 50 H I L BNN
+F4 "Littelfuse SA5.0A, Uni-Directional TVS Diode, 500W, 2-Pin DO-204AC" 400 -50 50 H I L BNN "Description"
+F5 "" 400 -150 50 H I L BNN "Height"
+F6 "576-SA5.0A" 400 -250 50 H I L BNN "Mouser Part Number"
+F7 "https://www.mouser.co.uk/ProductDetail/Littelfuse/SA5.0A?qs=HR2RnyOI4E7eCujU5LAbBQ%3D%3D" 400 -350 50 H I L BNN "Mouser Price/Stock"
+F8 "LITTELFUSE" 400 -450 50 H I L BNN "Manufacturer_Name"
+F9 "SA5.0A" 400 -550 50 H I L BNN "Manufacturer_Part_Number"
+DRAW
+X ~ 1 0 0 200 R 50 50 0 0 P
+X ~ 2 600 0 200 L 50 50 0 0 P
+P 4 0 1 6 200 0 400 100 400 -100 200 0 N
+P 2 0 1 6 200 -80 240 -100 N
+P 2 0 1 6 200 -80 200 80 N
+P 2 0 1 6 160 100 200 80 N
+ENDDRAW
+ENDDEF
+#
+#End Library
