@@ -10,6 +10,13 @@ The overall goals of this project were to:
 * Leave the most amount of RAM possible to the user.
 * Make the project fully open-source for others to tinker with and learn from.
 
+## To Do (in no particular order)
+
+* Create standalone emulator for this computer (in C/Rust/Python/etc...)
+* Improve the assembler to allow for a more 6502-style syntax (rather than relying on opcode names to define the variants).
+* Research adding interrupts to the computer and what kinds of changes would need to happen.
+* See the TODO.docx for bugs and improvements. This can be found in 'TCPU816 Computer v1/Hardware/TODO.docx'.
+
 ## Purpose
 
 I've had a strong interest in computer design since I was a teenager and had developed multiple CPU implementations in software. But, I've always had a dream of making my own computer from scratch on real hardware. 
