@@ -1,0 +1,4 @@
+This simulation is logically compatible, but is not cycle accurate. It does not model the multi-phase 
+clock or any of the parallelism that is found in the physical hardware. 
+
+Mostly because it already runs pretty slow as-is.   
