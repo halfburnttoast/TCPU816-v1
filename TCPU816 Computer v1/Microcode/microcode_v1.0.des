@@ -1,0 +1,860 @@
+.header RAM_OE | IR_WE | PC_COUNT
+.footer IRX_CLR
+
+
+.begin NOP
+.end
+
+
+.begin EDAO
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    RF_OE | RF_OUT_A | ED_WE | MAR_SEL
+.end
+
+
+
+.begin EDAI
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_CLR | CARRY_CLR
+    ED_OE | RF_WE | RF_IN_A | MAR_SEL
+    RF_OE | RF_OUT_A | ALU_EN
+.end
+
+
+.begin LDAI
+.args 1
+    ALU_CLR | CARRY_CLR
+    RAM_OE | ALU_EN | PC_COUNT
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin LDXI
+.args 1
+    ALU_CLR | CARRY_CLR
+    RAM_OE | ALU_EN | PC_COUNT
+    ALU_OE | RF_WE | RF_IN_X
+.end
+
+
+
+.begin LDYI
+.args 1
+    ALU_CLR | CARRY_CLR
+    RAM_OE | ALU_EN | PC_COUNT
+    ALU_OE | RF_WE | RF_IN_Y
+.end
+
+
+.begin LDAR
+.args 2
+    ALU_CLR | CARRY_CLR
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin LDARX
+.args 2
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_X
+    ALU_EN | RAM_OE
+    ALU_OE | MARL_L
+    ALU_CLR | PC_COUNT
+    ALU_EN | RAM_OE
+    ALU_OE | MARL_H
+    ALU_CLR | CARRY_CLR | PC_COUNT
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin LDARY
+.args 2
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_Y
+    ALU_EN | RAM_OE
+    ALU_OE | MARL_L
+    ALU_CLR | PC_COUNT
+    ALU_EN | RAM_OE
+    ALU_OE | MARL_H
+    ALU_CLR | CARRY_CLR | PC_COUNT
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin LDARI
+.args 2
+    ALU_CLR | CARRY_SET
+    RAM_OE | MARL_L
+    RAM_OE | ALU_EN | PC_COUNT     ; ACC = MAR_L+1
+    RAM_OE | MARL_H
+    RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP  ; remote pointer low
+    ALU_OE | MARL_L
+    ALU_CLR
+    RAM_OE | ALU_EN
+    ALU_OE | MARL_H | PC_COUNT
+    RAM_OE | MAR_SEL | MARL_H
+    ALU_CLR | RF_OE | RF_OUT_TMP | MARL_L
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_A
+.end | LDARI
+
+
+
+.begin STAR
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    RF_OE | RF_OUT_A | RAM_WE | MAR_SEL
+.end
+
+
+.begin STXR
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    RF_OE | RF_OUT_X | RAM_WE | MAR_SEL
+.end
+
+
+.begin STYR
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    RF_OE | RF_OUT_Y | RAM_WE | MAR_SEL
+.end
+
+
+.begin STARX
+.args 2
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_EN | RF_OE | RF_OUT_X
+    ALU_OE | MARL_L
+    ALU_CLR
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_OE | MARL_H
+    RF_OE | RF_OUT_A | RAM_WE | MAR_SEL
+.end
+
+
+.begin STARY
+.args 2
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_EN | RF_OE | RF_OUT_Y
+    ALU_OE | MARL_L
+    ALU_CLR
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_OE | MARL_H
+    RF_OE | RF_OUT_A | RAM_WE | MAR_SEL
+.end
+
+
+.begin STARI
+.args 2
+    ALU_CLR | CARRY_SET
+    RAM_OE | ALU_EN
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H
+    RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP
+    ALU_OE | MARL_L
+    ALU_CLR
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_OE | MARL_H
+    ALU_CLR | RAM_OE | MAR_SEL | MARL_H
+    RF_OE | RF_OUT_TMP | MARL_L
+    RAM_WE | MAR_SEL | RF_OE | RF_OUT_A
+.end
+
+
+.begin INA
+    ALU_CLR | CARRY_SET
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin INX
+    ALU_CLR | CARRY_SET
+    ALU_EN | RF_OE | RF_OUT_X
+    ALU_OE | RF_WE | RF_IN_X
+.end
+
+
+.begin INY
+    ALU_CLR | CARRY_SET
+    ALU_EN | RF_OE | RF_OUT_Y
+    ALU_OE | RF_WE | RF_IN_Y
+.end
+
+
+.begin dea
+    ALU_EN | ALU_NAND
+    CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin dex
+    ALU_EN | ALU_NAND
+    CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_X
+    ALU_OE | RF_WE | RF_IN_X
+.end
+
+
+.begin dey
+    ALU_EN | ALU_NAND
+    CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_Y
+    ALU_OE | RF_WE | RF_IN_Y
+.end
+
+
+
+
+.begin TAX
+    RF_OE | RF_WE | RF_OUT_A | RF_IN_X
+.end
+
+
+.begin TXA
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_X
+    RF_OE | RF_WE | RF_OUT_X | RF_IN_A
+.end
+
+
+.begin TYA
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_Y
+    RF_OE | RF_WE | RF_OUT_Y | RF_IN_A
+.end
+
+
+.begin TAY
+    RF_OE | RF_WE | RF_OUT_A | RF_IN_Y
+.end
+
+
+.begin TXY
+    RF_OE | RF_WE | RF_OUT_X | RF_IN_Y
+.end
+
+
+.begin TYX
+    RF_OE | RF_WE | RF_OUT_Y | RF_IN_X
+.end
+
+
+.begin TSA
+    ALU_CLR | CARRY_CLR
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    RF_WE | RF_IN_A | RAM_OE | MAR_SEL
+    ALU_EN | RAM_OE | MAR_SEL
+.end
+
+
+.begin TAS
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+.begin SEC
+    CARRY_SET
+.end
+
+
+.begin CLC
+    CARRY_CLR
+.end
+
+
+.begin ADDI
+.args 1
+    ALU_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin ADDR
+.args 2
+    ALU_CLR | RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin ADDX
+    ALU_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | RF_OE | RF_OUT_X
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin ADDY
+    ALU_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | RF_OE | RF_OUT_Y
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin SUBI
+.args 1
+    ALU_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    RAM_OE | ALU_EN | ALU_SUB | PC_COUNT
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin SUBR
+.args 2
+    ALU_CLR | RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_EN | RF_OE | RF_OUT_A
+    RAM_OE | ALU_EN | ALU_SUB | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin SUBX
+    ALU_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_SUB | RF_OE | RF_OUT_X
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin SUBY
+    ALU_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_SUB | RF_OE | RF_OUT_Y
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin NANDI
+.args 1
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_NAND | ALU_EN | PC_COUNT
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin NANDR
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_NAND | RAM_OE | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin NANDX
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_NAND | RF_OE | RF_OUT_X
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin NANDY
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_NAND | RF_OE | RF_OUT_Y
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin ASR
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ASR_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin ASR2
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ASR_OE | RF_WE | RF_IN_A
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ASR_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin ASR4
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ASR_OE | RF_WE | RF_IN_A
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ASR_OE | RF_WE | RF_IN_A
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ASR_OE | RF_WE | RF_IN_A
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ASR_OE | RF_WE | RF_IN_A
+.end
+
+
+
+
+
+.begin ANDI
+.args 1
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_NAND | RAM_OE | PC_COUNT
+    ALU_EN | CONST_OE_FF | ALU_NAND
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin ORI
+.args 1
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_NAND | CONST_OE_FF
+    ALU_OE | RF_WE | RF_IN_A
+    ALU_EN | ALU_NAND | RAM_OE | PC_COUNT
+    ALU_EN | ALU_NAND | RF_OE | RF_OUT_A
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin NOTA
+    ALU_EN | ALU_NAND
+    ALU_EN | RF_OE | RF_OUT_A | ALU_NAND
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin XORI
+.args 1
+    CONST_OE_FF | MARL_H
+    CONST_OE_FF | MARL_L
+    RAM_OE | MAR_SEL | MARL_L
+    ALU_OE | RAM_WE | MAR_SEL               ; stash A at RAM[SP]
+    ALU_EN | ALU_NAND | RAM_OE              ; acc = ~(acc & imm)
+    ALU_OE | RF_WE | RF_IN_TMP              ; tmp = ~(acc & imm)
+    ALU_EN | ALU_NAND | RAM_OE | MAR_SEL    ; acc = ~(~(acc & imm) & A)
+    ALU_OE | RAM_WE | MAR_SEL               ; RAM[SP] = acc
+    ALU_CLR
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_EN | ALU_NAND | RF_OE | RF_OUT_TMP  ; acc = ~(~(acc & imm) & B)
+    ALU_EN | ALU_NAND | RAM_OE | MAR_SEL    ; acc = ~(~(~(acc & imm) & A) & ~(~(acc & imm) & B)
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin JMP
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    JMP | MAR_SEL
+.end
+
+
+.begin JEQ
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    JEQ | MAR_SEL
+.end
+
+
+.begin JCS
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    JCS | MAR_SEL
+.end
+
+
+.begin JMPR
+.args 1
+    RAM_OE | MARL_L
+    ALU_CLR | CARRY_SET
+    RAM_OE | ALU_EN | PC_COUNT
+    RAM_OE | MARL_H
+    RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP
+    ALU_OE | MARL_L
+    RAM_OE | MAR_SEL | MARL_H
+    RF_OE | RF_OUT_TMP | MARL_L
+    JMP | MAR_SEL
+.end
+
+
+.begin RSP
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_EN | ALU_NAND
+    CARRY_CLR
+    ALU_EN | ALU_SUB
+    ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+.begin PHA
+    ALU_EN | ALU_NAND
+    CARRY_CLR
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RAM_WE | MAR_SEL
+    CARRY_SET
+    ALU_EN
+    ALU_OE | MARL_L
+    RF_OE | RF_OUT_A | RAM_WE | MAR_SEL
+.end
+
+
+.begin PHX
+    ALU_EN | ALU_NAND
+    CARRY_CLR
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RAM_WE | MAR_SEL
+    CARRY_SET
+    ALU_EN
+    ALU_OE | MARL_L
+    RF_OE | RF_OUT_X | RAM_WE | MAR_SEL
+.end
+
+
+.begin PHY
+    ALU_EN | ALU_NAND
+    CARRY_CLR
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RAM_WE | MAR_SEL
+    CARRY_SET
+    ALU_EN
+    ALU_OE | MARL_L
+    RF_OE | RF_OUT_Y | RAM_WE | MAR_SEL
+.end
+
+
+.begin PLA
+    ALU_CLR | CARRY_SET
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RAM_WE | MAR_SEL
+    ALU_OE | MARL_L
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+
+.begin PLX
+    ALU_CLR | CARRY_SET
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RAM_WE | MAR_SEL
+    ALU_OE | MARL_L
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_X
+.end
+
+
+.begin PLY
+    ALU_CLR | CARRY_SET
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RAM_WE | MAR_SEL
+    ALU_OE | MARL_L
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RF_WE | RF_IN_Y
+.end
+
+
+
+.begin JSR                      ; stores PC. Must PC_COUNT x2 on RTS)
+.args 2    
+    CONST_OE_FF | MARL_L            ; 0xFFFF->MAR
+    CONST_OE_FF | MARL_H            ;  "
+    ALU_EN | ALU_NAND               ; -1 -> ALU
+    CARRY_CLR
+    ALU_EN | RAM_OE | MAR_SEL       ; -1 + SPL -> ALU
+    RAM_OE | MAR_SEL | MARL_L       ; SPL -> MARL
+    RAM_WE | MAR_SEL | PCOUT_L      ; PCL -> RAM[SP]
+    ALU_OE | MARL_L                 ; SPL-1 -> MARL
+    CARRY_CLR
+    RAM_WE | MAR_SEL | PCOUT_H      ; PCH -> RAM[SP-1]
+    ALU_EN | CONST_OE_FF            ; SP-2 -> ALU
+    CONST_OE_FF | MARL_L            ; 0xFFFF -> MAR
+    ALU_OE | RAM_WE | MAR_SEL       ; ALU -> SPL
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    JMP | MAR_SEL
+.end
+
+
+.begin RTS
+.args 2     ; for alignment, no actual args used
+    ALU_CLR | CARRY_SET
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    RAM_OE | MAR_SEL | ALU_EN       ; SP + 1 -> ALU
+    ALU_OE | MARL_L
+    RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; PCH -> TMP
+    CARRY_SET
+    ALU_EN
+    ALU_OE | MARL_L                 ; SP + 1 -> ALU
+    RAM_OE | MAR_SEL | MARL_L       ; PCL -> MARL
+    RF_OE | RF_OUT_TMP | MARL_H     ; PCH -> MARH
+    JMP | MAR_SEL
+    CONST_OE_FF | MARL_L | PC_COUNT ; PC++
+    CONST_OE_FF | MARL_H | PC_COUNT ; PC++
+    ALU_OE | RAM_WE | MAR_SEL       ; ALU -> SP
+.end
+
+
+.begin LDSA
+.args 1
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_CLR | CARRY_SET
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_OE | MARL_L
+    RAM_OE | MAR_SEL | RF_WE | RF_IN_A
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+.end
+
+
+.begin STSA
+.args 1
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_CLR | CARRY_SET
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_OE | MARL_L
+    RAM_WE | MAR_SEL | RF_OE | RF_OUT_A
+.end
+
+
+
+.begin CPAI
+.args 1
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    CARRY_SET
+    ALU_EN | ALU_SUB | RAM_OE | PC_COUNT
+.end
+
+
+.begin CPAR
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    CARRY_SET
+    ALU_EN | ALU_SUB | RAM_OE | MAR_SEL
+.end
+
+
+.begin CPXI
+.args 1
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_X
+    CARRY_SET
+    ALU_EN | ALU_SUB | RAM_OE | PC_COUNT
+.end
+
+
+.begin CPYI
+.args 1
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_Y
+    CARRY_SET
+    ALU_EN | ALU_SUB | RAM_OE | PC_COUNT
+.end
+
+
+.begin STZ
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    RAM_WE | MAR_SEL
+.end
+
+
+.begin BIT
+.args 1
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_NAND | RAM_OE | PC_COUNT
+    ALU_EN | ALU_NAND | CONST_OE_FF
+.end
+
+
+.begin INCR
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_CLR | CARRY_SET
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+.begin DECR
+.args 2
+    ALU_EN | ALU_NAND
+    CARRY_CLR
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+.begin PHI
+.args 1
+    ALU_EN | ALU_NAND
+    CARRY_CLR
+    CONST_OE_FF | MARL_L
+    CONST_OE_FF | MARL_H
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_OE | RAM_WE | MAR_SEL
+    CARRY_SET
+    ALU_EN
+    ALU_OE | MARL_L
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+
+
+.begin ROLA
+    ALU_CLR                         ; first store ~(carry) to TMP
+    ALU_EN
+    ALU_EN | ALU_NAND | CONST_OE_FF
+    ALU_OE | RF_WE | RF_IN_TMP      ; TMP now contains ~(carry)
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | RF_OE | RF_OUT_A       ; ACC = A << 1, carry now contains the shifted-out bit
+    ALU_EN | ALU_NAND | CONST_OE_FF
+    ALU_EN | ALU_NAND | RF_OE | RF_OUT_TMP
+    ALU_OE | RF_WE | RF_IN_A        ; ACC -> A
+.end
+
+
+.begin ROLM
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_CLR                         ; first store ~(carry) to TMP
+    ALU_EN
+    ALU_EN | ALU_NAND | CONST_OE_FF
+    ALU_OE | RF_WE | RF_IN_TMP      ; TMP now contains ~(carry)
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RAM_OE | MAR_SEL
+    ALU_EN | RAM_OE | MAR_SEL       ; ACC = A << 1, carry now contains the shifted-out bit
+    ALU_EN | ALU_NAND | CONST_OE_FF
+    ALU_EN | ALU_NAND | RF_OE | RF_OUT_TMP
+    ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+
+.begin ORR
+.args 2
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H | PC_COUNT
+    ALU_CLR | CARRY_CLR
+    ALU_EN | RF_OE | RF_OUT_A
+    ALU_EN | ALU_NAND | CONST_OE_FF
+    ALU_OE | RF_WE | RF_IN_A
+    ALU_EN | ALU_NAND | RAM_OE | MAR_SEL
+    ALU_EN | ALU_NAND | RF_OE | RF_OUT_A
+    ALU_OE | RF_WE | RF_IN_A
+.end
+
+
+.begin EDOR
+.args 2
+    ALU_CLR | CARRY_SET
+    RAM_OE | ALU_EN
+    RAM_OE | MARL_L | PC_COUNT
+    RAM_OE | MARL_H
+    RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP
+    ALU_OE | MARL_L
+    ALU_CLR
+    ALU_EN | RAM_OE | PC_COUNT
+    ALU_OE | MARL_H
+    ALU_CLR | RAM_OE | MAR_SEL | MARL_H
+    RF_OE | RF_OUT_TMP | MARL_L
+    ED_WE | MAR_SEL | RF_OE | RF_OUT_A
+.end
+
+
+.begin EDIR
+.args 2
+    ALU_CLR | CARRY_SET
+    RAM_OE | MARL_L
+    RAM_OE | ALU_EN | PC_COUNT     ; ACC = MAR_L+1
+    RAM_OE | MARL_H
+    RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP  ; remote pointer low
+    ALU_OE | MARL_L
+    ALU_CLR
+    RAM_OE | ALU_EN
+    ALU_OE | MARL_H | PC_COUNT
+    RAM_OE | MAR_SEL | MARL_H
+    ALU_CLR | RF_OE | RF_OUT_TMP | MARL_L
+    ED_OE | MAR_SEL | RF_WE | RF_IN_A
+    RF_OE | ALU_EN
+.end
