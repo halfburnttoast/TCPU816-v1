@@ -1,0 +1,766 @@
+{
+    "NOP": {
+        "note": " No operation",
+        "NONE": {
+            "code": 0,
+            "args": 0,
+            "cycles": 2
+        }
+    },
+    "EDO": {
+        "note": " Write ACC to external device.",
+        "IND": {
+            "code": 1,
+            "args": 2,
+            "cycles": 5
+        },
+        "DIND": {
+            "code": 2,
+            "args": 2,
+            "cycles": 14
+        }
+    },
+    "EDI": {
+        "note": " Read from external device to ACC",
+        "IND": {
+            "code": 3,
+            "args": 2,
+            "cycles": 7
+        },
+        "DIND": {
+            "code": 4,
+            "args": 2,
+            "cycles": 15
+        }
+    },
+    "LDA": {
+        "note": " Load Accumulator",
+        "IMM": {
+            "code": 5,
+            "args": 1,
+            "cycles": 7
+        },
+        "IND": {
+            "code": 6,
+            "args": 2,
+            "cycles": 9
+        },
+        "DIND": {
+            "code": 7,
+            "args": 2,
+            "cycles": 15
+        },
+        "DINDX": {
+            "code": 8,
+            "args": 2,
+            "cycles": 19
+        },
+        "DINDY": {
+            "code": 9,
+            "args": 2,
+            "cycles": 19
+        },
+        "INDX": {
+            "code": 10,
+            "args": 2,
+            "cycles": 12
+        },
+        "INDY": {
+            "code": 11,
+            "args": 2,
+            "cycles": 12
+        }
+    },
+    "LDX": {
+        "note": " Load X register (mods alu status)",
+        "IMM": {
+            "code": 12,
+            "args": 1,
+            "cycles": 5
+        },
+        "IND": {
+            "code": 13,
+            "args": 2,
+            "cycles": 7
+        }
+    },
+    "LDY": {
+        "note": " Load Y register (mods alu status)",
+        "IMM": {
+            "code": 14,
+            "args": 1,
+            "cycles": 5
+        },
+        "IND": {
+            "code": 15,
+            "args": 2,
+            "cycles": 7
+        }
+    },
+    "STA": {
+        "note": " Store ACC",
+        "IND": {
+            "code": 16,
+            "args": 2,
+            "cycles": 5
+        },
+        "DIND": {
+            "code": 17,
+            "args": 2,
+            "cycles": 14
+        },
+        "DINDX": {
+            "code": 18,
+            "args": 2,
+            "cycles": 18
+        },
+        "DINDY": {
+            "code": 19,
+            "args": 2,
+            "cycles": 18
+        },
+        "INDX": {
+            "code": 20,
+            "args": 2,
+            "cycles": 10
+        },
+        "INDY": {
+            "code": 21,
+            "args": 2,
+            "cycles": 10
+        }
+    },
+    "STX": {
+        "note": " Store X",
+        "IND": {
+            "code": 22,
+            "args": 2,
+            "cycles": 5
+        }
+    },
+    "STY": {
+        "note": " Store Y",
+        "IND": {
+            "code": 23,
+            "args": 2,
+            "cycles": 5
+        }
+    },
+    "INA": {
+        "note": " Increment ACC",
+        "NONE": {
+            "code": 24,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "INX": {
+        "note": " Increment X",
+        "NONE": {
+            "code": 25,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "INY": {
+        "note": " Increment Y",
+        "NONE": {
+            "code": 26,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "DEA": {
+        "note": " Deincrement ACC",
+        "NONE": {
+            "code": 27,
+            "args": 0,
+            "cycles": 6
+        }
+    },
+    "DEX": {
+        "note": " Deincrement X",
+        "NONE": {
+            "code": 28,
+            "args": 0,
+            "cycles": 6
+        }
+    },
+    "DEY": {
+        "note": " Deincrement Y",
+        "NONE": {
+            "code": 29,
+            "args": 0,
+            "cycles": 6
+        }
+    },
+    "TAX": {
+        "note": " Transfer ACC to X",
+        "NONE": {
+            "code": 30,
+            "args": 0,
+            "cycles": 3
+        }
+    },
+    "TXA": {
+        "note": " Transfer X to ACC (mods ALU status)",
+        "NONE": {
+            "code": 31,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "TYA": {
+        "note": " Transfer Y to ACC (mods ALU status)",
+        "NONE": {
+            "code": 32,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "TAY": {
+        "note": " Transfer ACC to X",
+        "NONE": {
+            "code": 33,
+            "args": 0,
+            "cycles": 3
+        }
+    },
+    "TXY": {
+        "note": " Transfer X to Y",
+        "NONE": {
+            "code": 34,
+            "args": 0,
+            "cycles": 3
+        }
+    },
+    "TYX": {
+        "note": " Transfer Y to X",
+        "NONE": {
+            "code": 35,
+            "args": 0,
+            "cycles": 3
+        }
+    },
+    "TSA": {
+        "note": " Transfer SP to ACC",
+        "NONE": {
+            "code": 36,
+            "args": 0,
+            "cycles": 7
+        }
+    },
+    "TAS": {
+        "note": " Transfer ACC to SP",
+        "NONE": {
+            "code": 37,
+            "args": 0,
+            "cycles": 7
+        }
+    },
+    "SAX": {
+        "note": " Swap ACC and X values (no change to ALU status)",
+        "NONE": {
+            "code": 38,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "SAY": {
+        "note": " Swap ACC and X values (no change to ALU status)",
+        "NONE": {
+            "code": 39,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "SXY": {
+        "note": " Swap X and Y values",
+        "NONE": {
+            "code": 40,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "SEC": {
+        "note": " Set carry flag",
+        "NONE": {
+            "code": 41,
+            "args": 0,
+            "cycles": 3
+        }
+    },
+    "CLC": {
+        "note": " Clear carry flag",
+        "NONE": {
+            "code": 42,
+            "args": 0,
+            "cycles": 3
+        }
+    },
+    "ADC": {
+        "note": " Add ACC with carry",
+        "IMM": {
+            "code": 43,
+            "args": 1,
+            "cycles": 6
+        },
+        "IND": {
+            "code": 44,
+            "args": 2,
+            "cycles": 7
+        },
+        "INDX": {
+            "code": 45,
+            "args": 2,
+            "cycles": 17
+        },
+        "INDY": {
+            "code": 46,
+            "args": 2,
+            "cycles": 17
+        }
+    },
+    "ADX": {
+        "note": " Add X to ACC",
+        "NONE": {
+            "code": 47,
+            "args": 0,
+            "cycles": 6
+        }
+    },
+    "ADY": {
+        "note": " Add Y to ACC",
+        "NONE": {
+            "code": 48,
+            "args": 0,
+            "cycles": 6
+        }
+    },
+    "SBC": {
+        "note": " Subtract from ACC with carry",
+        "IMM": {
+            "code": 49,
+            "args": 1,
+            "cycles": 7
+        },
+        "IND": {
+            "code": 50,
+            "args": 2,
+            "cycles": 9
+        },
+        "INDX": {
+            "code": 51,
+            "args": 2,
+            "cycles": 21
+        },
+        "INDY": {
+            "code": 52,
+            "args": 2,
+            "cycles": 21
+        }
+    },
+    "SBX": {
+        "note": " Subtract X from ACC",
+        "NONE": {
+            "code": 53,
+            "args": 0,
+            "cycles": 7
+        }
+    },
+    "SBY": {
+        "note": " Subtract Y from ACC",
+        "NONE": {
+            "code": 54,
+            "args": 0,
+            "cycles": 7
+        }
+    },
+    "NDA": {
+        "note": " NAND ACC",
+        "IMM": {
+            "code": 55,
+            "args": 1,
+            "cycles": 6
+        },
+        "IND": {
+            "code": 56,
+            "args": 2,
+            "cycles": 8
+        }
+    },
+    "NDX": {
+        "note": " ACC NAND X => ACC",
+        "NONE": {
+            "code": 57,
+            "args": 0,
+            "cycles": 6
+        }
+    },
+    "NDY": {
+        "note": " ACC NAND Y => ACC",
+        "NONE": {
+            "code": 58,
+            "args": 0,
+            "cycles": 6
+        }
+    },
+    "ASR": {
+        "note": " Arithmetic shift right ACC by one",
+        "NONE": {
+            "code": 59,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "ASR2": {
+        "note": " ASR x2",
+        "NONE": {
+            "code": 60,
+            "args": 0,
+            "cycles": 8
+        }
+    },
+    "ASR4": {
+        "note": " ASR x4",
+        "NONE": {
+            "code": 61,
+            "args": 0,
+            "cycles": 14
+        }
+    },
+    "AND": {
+        "note": " Logical AND ACC",
+        "IMM": {
+            "code": 62,
+            "args": 1,
+            "cycles": 7
+        },
+        "IND": {
+            "code": 63,
+            "args": 2,
+            "cycles": 9
+        }
+    },
+    "ORA": {
+        "note": " Logical OR ACC",
+        "IMM": {
+            "code": 64,
+            "args": 1,
+            "cycles": 9
+        },
+        "IND": {
+            "code": 65,
+            "args": 2,
+            "cycles": 11
+        }
+    },
+    "NTA": {
+        "note": " Logical NOT ACC",
+        "NONE": {
+            "code": 66,
+            "args": 0,
+            "cycles": 5
+        }
+    },
+    "XOR": {
+        "note": " Logical XOR ACC",
+        "IMM": {
+            "code": 67,
+            "args": 1,
+            "cycles": 13
+        },
+        "IND": {
+            "code": 68,
+            "args": 2,
+            "cycles": 15
+        }
+    },
+    "JMP": {
+        "note": " Unconditional Jump",
+        "IND": {
+            "code": 69,
+            "args": 2,
+            "cycles": 5
+        },
+        "DIND": {
+            "code": 70,
+            "args": 2,
+            "cycles": 11
+        }
+    },
+    "JEQ": {
+        "note": " Jump if zero flag set",
+        "IND": {
+            "code": 71,
+            "args": 2,
+            "cycles": 5
+        }
+    },
+    "JCS": {
+        "note": " Jump if carry flag set",
+        "IND": {
+            "code": 72,
+            "args": 2,
+            "cycles": 5
+        }
+    },
+    "RSP": {
+        "note": " Reset stack pointer to 0xFE",
+        "NONE": {
+            "code": 73,
+            "args": 0,
+            "cycles": 8
+        }
+    },
+    "SPA": {
+        "note": " Add IMM value to stack pointer. Useful for popping + discarding values quickly from the stack.",
+        "IMM": {
+            "code": 74,
+            "args": 1,
+            "cycles": 8
+        }
+    },
+    "PHA": {
+        "note": " Push ACC to stack",
+        "NONE": {
+            "code": 75,
+            "args": 0,
+            "cycles": 12
+        }
+    },
+    "PHX": {
+        "note": " Push X to stack",
+        "NONE": {
+            "code": 76,
+            "args": 0,
+            "cycles": 12
+        }
+    },
+    "PHY": {
+        "note": " Push Y to stack",
+        "NONE": {
+            "code": 77,
+            "args": 0,
+            "cycles": 12
+        }
+    },
+    "PLA": {
+        "note": " Pop stack into ACC",
+        "NONE": {
+            "code": 78,
+            "args": 0,
+            "cycles": 11
+        }
+    },
+    "PLX": {
+        "note": " Pop stack into X",
+        "NONE": {
+            "code": 79,
+            "args": 0,
+            "cycles": 11
+        }
+    },
+    "PLY": {
+        "note": " Pop stack into Y",
+        "NONE": {
+            "code": 80,
+            "args": 0,
+            "cycles": 11
+        }
+    },
+    "JSR": {
+        "note": " Jump Subroutine",
+        "IND": {
+            "code": 81,
+            "args": 2,
+            "cycles": 18
+        }
+    },
+    "RTS": {
+        "note": " Return Subroutine",
+        "NONE": {
+            "code": 82,
+            "args": 0,
+            "cycles": 17
+        }
+    },
+    "LSA": {
+        "note": " Load stack argument from ((current_sp + 1) + IMM) into ACC",
+        "IMM": {
+            "code": 83,
+            "args": 1,
+            "cycles": 11
+        },
+        "SRR": {
+            "code": 84,
+            "args": 1,
+            "cycles": 17
+        },
+        "SRIX": {
+            "code": 85,
+            "args": 1,
+            "cycles": 23
+        },
+        "SRIY": {
+            "code": 86,
+            "args": 1,
+            "cycles": 23
+        }
+    },
+    "SSA": {
+        "note": " Store stack argument from ACC to ((current_sp + 1) + IMM)",
+        "IMM": {
+            "code": 87,
+            "args": 1,
+            "cycles": 9
+        },
+        "SRR": {
+            "code": 88,
+            "args": 1,
+            "cycles": 16
+        },
+        "SRIX": {
+            "code": 89,
+            "args": 1,
+            "cycles": 21
+        },
+        "SRIY": {
+            "code": 90,
+            "args": 1,
+            "cycles": 21
+        }
+    },
+    "CPA": {
+        "note": " Compare with ACC. Result not stored.",
+        "IMM": {
+            "code": 91,
+            "args": 1,
+            "cycles": 6
+        },
+        "IND": {
+            "code": 92,
+            "args": 2,
+            "cycles": 8
+        }
+    },
+    "CPX": {
+        "note": " Compare with X. Result not stored.",
+        "IMM": {
+            "code": 93,
+            "args": 1,
+            "cycles": 6
+        },
+        "IND": {
+            "code": 94,
+            "args": 2,
+            "cycles": 8
+        }
+    },
+    "CPY": {
+        "note": " Compare with Y. Result not stored.",
+        "IMM": {
+            "code": 95,
+            "args": 1,
+            "cycles": 6
+        },
+        "IND": {
+            "code": 96,
+            "args": 2,
+            "cycles": 8
+        }
+    },
+    "STZ": {
+        "note": " Store zero to address",
+        "IND": {
+            "code": 97,
+            "args": 2,
+            "cycles": 5
+        }
+    },
+    "BIT": {
+        "note": " AND bit test with ACC. Result not stored.",
+        "IMM": {
+            "code": 98,
+            "args": 1,
+            "cycles": 6
+        },
+        "IND": {
+            "code": 99,
+            "args": 2,
+            "cycles": 8
+        }
+    },
+    "INR": {
+        "note": " Increment remote address by 1",
+        "IND": {
+            "code": 100,
+            "args": 2,
+            "cycles": 7
+        }
+    },
+    "DER": {
+        "note": " Deincrement remote address by 1",
+        "IND": {
+            "code": 101,
+            "args": 2,
+            "cycles": 8
+        }
+    },
+    "PHI": {
+        "note": " Push immediate to stack",
+        "IMM": {
+            "code": 102,
+            "args": 1,
+            "cycles": 14
+        }
+    },
+    "SVC": {
+        "note": " Save carry to stash RAM[0xFF00]",
+        "NONE": {
+            "code": 103,
+            "args": 0,
+            "cycles": 7
+        }
+    },
+    "LDC": {
+        "note": " Load carry from stash RAM[0xFF00]",
+        "NONE": {
+            "code": 104,
+            "args": 0,
+            "cycles": 8
+        }
+    },
+    "RLA": {
+        "note": " Logical roll left ACC by 1",
+        "NONE": {
+            "code": 105,
+            "args": 0,
+            "cycles": 12
+        }
+    },
+    "RLM": {
+        "note": " Logical roll left indirect address",
+        "IND": {
+            "code": 106,
+            "args": 2,
+            "cycles": 14
+        }
+    },
+    "PHC": {
+        "note": " Push carry to stack",
+        "NONE": {
+            "code": 107,
+            "args": 0,
+            "cycles": 16
+        }
+    },
+    "PLC": {
+        "note": " Pull carry from stack",
+        "NONE": {
+            "code": 108,
+            "args": 0,
+            "cycles": 15
+        }
+    }
+}

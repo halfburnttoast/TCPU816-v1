@@ -1,0 +1,260 @@
+TCPU816 Opcodes:
+Note: All '$nn' or '$nnnn' arguments may be replaced by a label name.
+Note: Use > and < characters to specify high and low bytes.
+Note: This document was automatically generated.Opcode modes are formatted as: <opcode>: <mnemonic> - <example>
+
+NOP -  No operation
+	0x00: NONE    	-	 NOP 
+
+EDO -  Write ACC to external device.
+	0x01: IND    	-	 EDO $nnnn
+	0x02: DIND    	-	 EDO ($nnnn)
+
+EDI -  Read from external device to ACC
+	0x03: IND    	-	 EDI $nnnn
+	0x04: DIND    	-	 EDI ($nnnn)
+
+LDA -  Load Accumulator
+	0x05: IMM    	-	 LDA #$nn
+	0x06: IND    	-	 LDA $nnnn
+	0x07: DIND    	-	 LDA ($nnnn)
+	0x08: DINDX    	-	 LDA ($nnnn),X
+	0x09: DINDY    	-	 LDA ($nnnn),Y
+	0x0A: INDX    	-	 LDA $nnnn,X
+	0x0B: INDY    	-	 LDA $nnnn,Y
+
+LDX -  Load X register (mods alu status)
+	0x0C: IMM    	-	 LDX #$nn
+	0x0D: IND    	-	 LDX $nnnn
+
+LDY -  Load Y register (mods alu status)
+	0x0E: IMM    	-	 LDY #$nn
+	0x0F: IND    	-	 LDY $nnnn
+
+STA -  Store ACC
+	0x10: IND    	-	 STA $nnnn
+	0x11: DIND    	-	 STA ($nnnn)
+	0x12: DINDX    	-	 STA ($nnnn),X
+	0x13: DINDY    	-	 STA ($nnnn),Y
+	0x14: INDX    	-	 STA $nnnn,X
+	0x15: INDY    	-	 STA $nnnn,Y
+
+STX -  Store X
+	0x16: IND    	-	 STX $nnnn
+
+STY -  Store Y
+	0x17: IND    	-	 STY $nnnn
+
+INA -  Increment ACC
+	0x18: NONE    	-	 INA 
+
+INX -  Increment X
+	0x19: NONE    	-	 INX 
+
+INY -  Increment Y
+	0x1A: NONE    	-	 INY 
+
+DEA -  Deincrement ACC
+	0x1B: NONE    	-	 DEA 
+
+DEX -  Deincrement X
+	0x1C: NONE    	-	 DEX 
+
+DEY -  Deincrement Y
+	0x1D: NONE    	-	 DEY 
+
+TAX -  Transfer ACC to X
+	0x1E: NONE    	-	 TAX 
+
+TXA -  Transfer X to ACC (mods ALU status)
+	0x1F: NONE    	-	 TXA 
+
+TYA -  Transfer Y to ACC (mods ALU status)
+	0x20: NONE    	-	 TYA 
+
+TAY -  Transfer ACC to X
+	0x21: NONE    	-	 TAY 
+
+TXY -  Transfer X to Y
+	0x22: NONE    	-	 TXY 
+
+TYX -  Transfer Y to X
+	0x23: NONE    	-	 TYX 
+
+TSA -  Transfer SP to ACC
+	0x24: NONE    	-	 TSA 
+
+TAS -  Transfer ACC to SP
+	0x25: NONE    	-	 TAS 
+
+SAX -  Swap ACC and X values (no change to ALU status)
+	0x26: NONE    	-	 SAX 
+
+SAY -  Swap ACC and X values (no change to ALU status)
+	0x27: NONE    	-	 SAY 
+
+SXY -  Swap X and Y values
+	0x28: NONE    	-	 SXY 
+
+SEC -  Set carry flag
+	0x29: NONE    	-	 SEC 
+
+CLC -  Clear carry flag
+	0x2A: NONE    	-	 CLC 
+
+ADC -  Add ACC with carry
+	0x2B: IMM    	-	 ADC #$nn
+	0x2C: IND    	-	 ADC $nnnn
+	0x2D: INDX    	-	 ADC $nnnn,X
+	0x2E: INDY    	-	 ADC $nnnn,Y
+
+ADX -  Add X to ACC
+	0x2F: NONE    	-	 ADX 
+
+ADY -  Add Y to ACC
+	0x30: NONE    	-	 ADY 
+
+SBC -  Subtract from ACC with carry
+	0x31: IMM    	-	 SBC #$nn
+	0x32: IND    	-	 SBC $nnnn
+	0x33: INDX    	-	 SBC $nnnn,X
+	0x34: INDY    	-	 SBC $nnnn,Y
+
+SBX -  Subtract X from ACC
+	0x35: NONE    	-	 SBX 
+
+SBY -  Subtract Y from ACC
+	0x36: NONE    	-	 SBY 
+
+NDA -  NAND ACC
+	0x37: IMM    	-	 NDA #$nn
+	0x38: IND    	-	 NDA $nnnn
+
+NDX -  ACC NAND X => ACC
+	0x39: NONE    	-	 NDX 
+
+NDY -  ACC NAND Y => ACC
+	0x3A: NONE    	-	 NDY 
+
+ASR -  Arithmetic shift right ACC by one
+	0x3B: NONE    	-	 ASR 
+
+ASR2 -  ASR x2
+	0x3C: NONE    	-	 ASR2 
+
+ASR4 -  ASR x4
+	0x3D: NONE    	-	 ASR4 
+
+AND -  Logical AND ACC
+	0x3E: IMM    	-	 AND #$nn
+	0x3F: IND    	-	 AND $nnnn
+
+ORA -  Logical OR ACC
+	0x40: IMM    	-	 ORA #$nn
+	0x41: IND    	-	 ORA $nnnn
+
+NTA -  Logical NOT ACC
+	0x42: NONE    	-	 NTA 
+
+XOR -  Logical XOR ACC
+	0x43: IMM    	-	 XOR #$nn
+	0x44: IND    	-	 XOR $nnnn
+
+JMP -  Unconditional Jump
+	0x45: IND    	-	 JMP $nnnn
+	0x46: DIND    	-	 JMP ($nnnn)
+
+JEQ -  Jump if zero flag set
+	0x47: IND    	-	 JEQ $nnnn
+
+JCS -  Jump if carry flag set
+	0x48: IND    	-	 JCS $nnnn
+
+RSP -  Reset stack pointer to 0xFE
+	0x49: NONE    	-	 RSP 
+
+SPA -  Add IMM value to stack pointer. Useful for popping + discarding values quickly from the stack.
+	0x4A: IMM    	-	 SPA #$nn
+
+PHA -  Push ACC to stack
+	0x4B: NONE    	-	 PHA 
+
+PHX -  Push X to stack
+	0x4C: NONE    	-	 PHX 
+
+PHY -  Push Y to stack
+	0x4D: NONE    	-	 PHY 
+
+PLA -  Pop stack into ACC
+	0x4E: NONE    	-	 PLA 
+
+PLX -  Pop stack into X
+	0x4F: NONE    	-	 PLX 
+
+PLY -  Pop stack into Y
+	0x50: NONE    	-	 PLY 
+
+JSR -  Jump Subroutine
+	0x51: IND    	-	 JSR $nnnn
+
+RTS -  Return Subroutine
+	0x52: NONE    	-	 RTS 
+
+LSA -  Load stack argument from ((current_sp + 1) + IMM) into ACC
+	0x53: IMM    	-	 LSA #$nn
+	0x54: SRR    	-	 LSA *($nn)
+	0x55: SRIX    	-	 LSA *($nn),X
+	0x56: SRIY    	-	 LSA *($nn),Y
+
+SSA -  Store stack argument from ACC to ((current_sp + 1) + IMM)
+	0x57: IMM    	-	 SSA #$nn
+	0x58: SRR    	-	 SSA *($nn)
+	0x59: SRIX    	-	 SSA *($nn),X
+	0x5A: SRIY    	-	 SSA *($nn),Y
+
+CPA -  Compare with ACC. Result not stored.
+	0x5B: IMM    	-	 CPA #$nn
+	0x5C: IND    	-	 CPA $nnnn
+
+CPX -  Compare with X. Result not stored.
+	0x5D: IMM    	-	 CPX #$nn
+	0x5E: IND    	-	 CPX $nnnn
+
+CPY -  Compare with Y. Result not stored.
+	0x5F: IMM    	-	 CPY #$nn
+	0x60: IND    	-	 CPY $nnnn
+
+STZ -  Store zero to address
+	0x61: IND    	-	 STZ $nnnn
+
+BIT -  AND bit test with ACC. Result not stored.
+	0x62: IMM    	-	 BIT #$nn
+	0x63: IND    	-	 BIT $nnnn
+
+INR -  Increment remote address by 1
+	0x64: IND    	-	 INR $nnnn
+
+DER -  Deincrement remote address by 1
+	0x65: IND    	-	 DER $nnnn
+
+PHI -  Push immediate to stack
+	0x66: IMM    	-	 PHI #$nn
+
+SVC -  Save carry to stash RAM[0xFF00]
+	0x67: NONE    	-	 SVC 
+
+LDC -  Load carry from stash RAM[0xFF00]
+	0x68: NONE    	-	 LDC 
+
+RLA -  Logical roll left ACC by 1
+	0x69: NONE    	-	 RLA 
+
+RLM -  Logical roll left indirect address
+	0x6A: IND    	-	 RLM $nnnn
+
+PHC -  Push carry to stack
+	0x6B: NONE    	-	 PHC 
+
+PLC -  Pull carry from stack
+	0x6C: NONE    	-	 PLC 
+

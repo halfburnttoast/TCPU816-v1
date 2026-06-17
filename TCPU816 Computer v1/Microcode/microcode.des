@@ -1,0 +1,1446 @@
+;     This program is free software: you can redistribute it and/or modify
+;     it under the terms of the GNU General Public License as published by
+;     the Free Software Foundation, either version 3 of the License, or
+;     (at your option) any later version.
+;
+;     This program is distributed in the hope that it will be useful,
+;     but WITHOUT ANY WARRANTY; without even the implied warranty of
+;     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+;     GNU General Public License for more details.
+;
+;     You should have received a copy of the GNU General Public License
+;     along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+
+
+
+;                             ======= CHANGE LOG =======
+; Version 2.9.0
+;   Added PHC and PLC
+;       PHC - Push carry to stack
+;       PLC - Pull carry from stack.
+;   Added SVC and LDC opcodes
+;       SVC - Save Carry to stash at RAM[0xFF00]
+;       LDC - Load Carry from stash at RAM[0xFF00]
+;   Modified LDA opcode IMM and IND addressing modes to preserve carry.
+; Version 2.8.0
+;   Removed LSR and SSR opcodes. Moved to LSA and SSA as address modes.
+;   Added LSA and SSA with new addressing modes SRR, SRIX, SRIY
+;       SRR - Stack Relative Remote - *($nn)
+;           Same as SSR opcode. Resolves pointer from the stack relative to the stack pointer.
+;       SRIX - Stack Relative Indexed by X - *($nn),X
+;       SRIY - Stack Relative Indexed by Y - *($nn),Y
+;           Same as SRR but the X or Y register is added to the pointer after dereferencing.
+; Version 2.7.0
+;   Added LSR and SSR. Allows dereferencing pointers within the stack
+;   for both loading and storing. 
+; Version 2.6.0
+;   Added SPA (IMM) - Adds immediate value to stack pointer.
+;   Useful for popping and discarding multiple values from stack.
+; Version 2.5.0
+;   Added SAX, SAY, SXY
+;       Swaps values in registers, retaining each value.
+; Version 2.4.0
+;   Added INDX,INDY modes for SBC
+; Version 2.3.1
+;   MAJOR fix for the order of operations for all subtraction opcodes.
+; Version 2.3.0
+;   Added INDX,INDY for ADC
+;   Added IND modes for CPX and CPY
+; Version 2.2.1
+;   Arg count fix for BIT[IND]
+; Version 2.2.0
+;   Added IND mode for BIT
+; Version 2.1.0
+;    Fixed XOR logic bug. 
+;    Added XOR IND mode.
+
+
+
+
+
+
+
+
+;                             ======= BEGIN OPCODE DEFINITIONS =======
+
+
+.header RAM_OE | IR_WE | PC_COUNT
+.footer IRX_CLR
+
+
+.begin NOP 
+.note No operation
+    .mode NONE
+.end
+
+
+.begin EDO
+.note Write ACC to external device.
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        RF_OE | RF_OUT_ACC | ED_WE | MAR_SEL
+
+    .mode DIND
+        ALU_CLR | CARRY_SET
+        RAM_OE | ALU_EN
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP
+        ALU_OE | MARL_L
+        ALU_CLR
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_H
+        ALU_CLR | RAM_OE | MAR_SEL | MARL_H
+        RF_OE | RF_OUT_TMP | MARL_L
+        ED_WE | MAR_SEL | RF_OE | RF_OUT_ACC
+.end
+
+.begin EDI
+.note Read from external device to ACC
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_CLR | CARRY_CLR
+        ED_OE | RF_WE | RF_IN_ACC | MAR_SEL
+        RF_OE | RF_OUT_ACC | ALU_EN
+
+    .mode DIND
+        ALU_CLR | CARRY_SET
+        RAM_OE | MARL_L
+        RAM_OE | ALU_EN | PC_COUNT     ; ACC = MAR_L+1
+        RAM_OE | MARL_H
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP  ; remote pointer low
+        ALU_OE | MARL_L
+        ALU_CLR
+        RAM_OE | ALU_EN
+        ALU_OE | MARL_H | PC_COUNT
+        RAM_OE | MAR_SEL | MARL_H
+        ALU_CLR | RF_OE | RF_OUT_TMP | MARL_L
+        ED_OE | MAR_SEL | RF_WE | RF_IN_ACC
+        RF_OE | ALU_EN 
+.end
+
+
+; TODO: Revise LDA so that it doesn't affect carry flag status (if possible).
+.begin LDA
+.note Load Accumulator
+    .mode IMM       ; preserves carry
+        ALU_CLR
+        ALU_EN | ALU_NAND
+        ALU_EN | ALU_NAND | RAM_OE | PC_COUNT
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode IND       ; preserves carry
+        ALU_CLR
+        ALU_EN | ALU_NAND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_EN | ALU_NAND | RAM_OE | MAR_SEL
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode DIND
+        ALU_CLR | CARRY_SET
+        RAM_OE | MARL_L                         ; IMM_L -> MARL
+        RAM_OE | ALU_EN | PC_COUNT              ; ACC = IMM_L+1
+        RAM_OE | MARL_H                         ; IMM_H -> MAR_H
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; RAM(remote pointer low) -> TMP
+        ALU_OE | MARL_L                         ; ALU(IMM_L+1) -> MARL_L
+        ALU_CLR
+        RAM_OE | ALU_EN                         ; RAM(remote pointer high) -> ALU
+        ALU_OE | MARL_H | PC_COUNT              ; ALU(remote high) -> MARH
+        RAM_OE | MAR_SEL | MARL_H               ; 
+        ALU_CLR | RF_OE | RF_OUT_TMP | MARL_L
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC    
+
+    .mode DINDX
+        ALU_CLR | CARRY_SET
+        RAM_OE | MARL_L                         ; IMM_L -> MARL
+        RAM_OE | ALU_EN | PC_COUNT              ; ACC = IMM_L+1
+        RAM_OE | MARL_H                         ; IMM_H -> MAR_H
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; RAM(remote pointer low) -> TMP
+        ALU_OE | MARL_L                         ; ALU(IMM_L+1) -> MARL_L
+        ALU_CLR
+        RF_OE | RF_OUT_TMP | ALU_EN             ; Rem pointer low -> ALU
+        RF_OE | RF_OUT_X | ALU_EN               ; rem pointer low + X -> ALU
+        ALU_OE | RF_WE | RF_IN_TMP              ; PL + X -> TMP
+        ALU_CLR
+        RAM_OE | ALU_EN                         ; RAM(remote pointer high) -> ALU
+        ALU_OE | MARL_H | PC_COUNT              ; ALU(remote high) -> MARH
+        RAM_OE | MAR_SEL | MARL_H               ; 
+        ALU_CLR | RF_OE | RF_OUT_TMP | MARL_L
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode DINDY
+        ALU_CLR | CARRY_SET
+        RAM_OE | MARL_L                         ; IMM_L -> MARL
+        RAM_OE | ALU_EN | PC_COUNT              ; ACC = IMM_L+1
+        RAM_OE | MARL_H                         ; IMM_H -> MAR_H
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; RAM(remote pointer low) -> TMP
+        ALU_OE | MARL_L                         ; ALU(IMM_L+1) -> MARL_L
+        ALU_CLR
+        RF_OE | RF_OUT_TMP | ALU_EN             ; Rem pointer low -> ALU
+        RF_OE | RF_OUT_Y | ALU_EN               ; rem pointer low + X -> ALU
+        ALU_OE | RF_WE | RF_IN_TMP              ; PL + X -> TMP
+        ALU_CLR
+        RAM_OE | ALU_EN                         ; RAM(remote pointer high) -> ALU
+        ALU_OE | MARL_H | PC_COUNT              ; ALU(remote high) -> MARH
+        RAM_OE | MAR_SEL | MARL_H               ; 
+        ALU_CLR | RF_OE | RF_OUT_TMP | MARL_L
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC        
+
+    .mode INDX
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_X
+        ALU_EN | RAM_OE
+        ALU_OE | MARL_L
+        ALU_CLR | PC_COUNT
+        ALU_EN | RAM_OE
+        ALU_OE | MARL_H
+        ALU_CLR | CARRY_CLR | PC_COUNT
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC
+    
+    .mode INDY
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_Y
+        ALU_EN | RAM_OE
+        ALU_OE | MARL_L
+        ALU_CLR | PC_COUNT
+        ALU_EN | RAM_OE
+        ALU_OE | MARL_H
+        ALU_CLR | CARRY_CLR | PC_COUNT
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC        
+.end
+
+
+
+.begin LDX
+.note Load X register (mods alu status)
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        RAM_OE | ALU_EN | PC_COUNT
+        ALU_OE | RF_WE | RF_IN_X
+
+    .mode IND
+        ALU_CLR | CARRY_CLR
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_X
+.end
+
+
+
+.begin LDY
+.note Load Y register (mods alu status)
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        RAM_OE | ALU_EN | PC_COUNT
+        ALU_OE | RF_WE | RF_IN_Y
+
+    .mode IND
+        ALU_CLR | CARRY_CLR
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_Y
+.end
+
+
+.begin STA
+.note Store ACC
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        RF_OE | RF_OUT_ACC | RAM_WE | MAR_SEL
+
+    .mode DIND
+        ALU_CLR | CARRY_SET
+        RAM_OE | ALU_EN
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP
+        ALU_OE | MARL_L
+        ALU_CLR
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_H
+        ALU_CLR | RAM_OE | MAR_SEL | MARL_H
+        RF_OE | RF_OUT_TMP | MARL_L
+        RAM_WE | MAR_SEL | RF_OE | RF_OUT_ACC
+
+    .mode DINDX
+        ALU_CLR | CARRY_SET
+        RAM_OE | MARL_L                         ; IMM_L -> MARL
+        RAM_OE | ALU_EN | PC_COUNT              ; ACC = IMM_L+1
+        RAM_OE | MARL_H                         ; IMM_H -> MAR_H
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; RAM(remote pointer low) -> TMP
+        ALU_OE | MARL_L                         ; ALU(IMM_L+1) -> MARL_L
+        ALU_CLR
+        RF_OE | RF_OUT_TMP | ALU_EN             ; Rem pointer low -> ALU
+        RF_OE | RF_OUT_X | ALU_EN               ; rem pointer low + X -> ALU
+        ALU_OE | RF_WE | RF_IN_TMP              ; PL + X -> TMP
+        ALU_CLR
+        RAM_OE | ALU_EN                         ; RAM(remote pointer high) -> ALU
+        ALU_OE | MARL_H | PC_COUNT              ; ALU(remote high) -> MARH
+        RAM_OE | MAR_SEL | MARL_H               ; 
+        ALU_CLR | RF_OE | RF_OUT_TMP | MARL_L
+        RF_OE | RF_OUT_ACC | RAM_WE | MAR_SEL 
+
+    .mode DINDY
+        ALU_CLR | CARRY_SET
+        RAM_OE | MARL_L                         ; IMM_L -> MARL
+        RAM_OE | ALU_EN | PC_COUNT              ; ACC = IMM_L+1
+        RAM_OE | MARL_H                         ; IMM_H -> MAR_H
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; RAM(remote pointer low) -> TMP
+        ALU_OE | MARL_L                         ; ALU(IMM_L+1) -> MARL_L
+        ALU_CLR
+        RF_OE | RF_OUT_TMP | ALU_EN             ; Rem pointer low -> ALU
+        RF_OE | RF_OUT_Y | ALU_EN               ; rem pointer low + X -> ALU
+        ALU_OE | RF_WE | RF_IN_TMP              ; PL + X -> TMP
+        ALU_CLR
+        RAM_OE | ALU_EN                         ; RAM(remote pointer high) -> ALU
+        ALU_OE | MARL_H | PC_COUNT              ; ALU(remote high) -> MARH
+        RAM_OE | MAR_SEL | MARL_H               ; 
+        ALU_CLR | RF_OE | RF_OUT_TMP | MARL_L
+        RF_OE | RF_OUT_ACC | RAM_WE | MAR_SEL 
+    
+    .mode INDX
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_EN | RF_OE | RF_OUT_X
+        ALU_OE | MARL_L
+        ALU_CLR
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_H
+        RF_OE | RF_OUT_ACC | RAM_WE | MAR_SEL
+
+    .mode INDY
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_EN | RF_OE | RF_OUT_Y
+        ALU_OE | MARL_L
+        ALU_CLR
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_H
+        RF_OE | RF_OUT_ACC | RAM_WE | MAR_SEL
+.end
+
+
+
+.begin STX
+.note Store X
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        RF_OE | RF_OUT_X | RAM_WE | MAR_SEL
+.end
+
+
+
+.begin STY
+.note Store Y
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        RF_OE | RF_OUT_Y | RAM_WE | MAR_SEL
+.end
+   
+
+
+.begin INA
+.note Increment ACC
+    .mode NONE
+        ALU_CLR | CARRY_SET
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin INX
+.note Increment X
+    .mode NONE
+        ALU_CLR | CARRY_SET
+        ALU_EN | RF_OE | RF_OUT_X
+        ALU_OE | RF_WE | RF_IN_X
+.end
+
+
+.begin INY
+.note Increment Y
+    .mode NONE
+        ALU_CLR | CARRY_SET
+        ALU_EN | RF_OE | RF_OUT_Y
+        ALU_OE | RF_WE | RF_IN_Y
+.end
+
+
+.begin DEA
+.note Deincrement ACC
+    .mode NONE
+        ALU_EN | ALU_NAND
+        CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin DEX
+.note Deincrement X
+    .mode NONE
+        ALU_EN | ALU_NAND
+        CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_X
+        ALU_OE | RF_WE | RF_IN_X
+.end
+
+
+
+.begin DEY
+.note Deincrement Y
+    .mode NONE
+        ALU_EN | ALU_NAND
+        CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_Y
+        ALU_OE | RF_WE | RF_IN_Y
+.end
+
+
+
+.begin TAX
+.note Transfer ACC to X
+    .mode NONE
+        RF_OE | RF_WE | RF_OUT_ACC | RF_IN_X
+.end
+
+
+.begin TXA
+.note Transfer X to ACC (mods ALU status)
+    .mode NONE
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_X
+        RF_OE | RF_WE | RF_OUT_X | RF_IN_ACC
+.end
+
+
+.begin TYA
+.note Transfer Y to ACC (mods ALU status)
+    .mode NONE
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_Y
+        RF_OE | RF_WE | RF_OUT_Y | RF_IN_ACC
+.end
+
+
+.begin TAY
+.note Transfer ACC to X
+    .mode NONE
+        RF_OE | RF_WE | RF_OUT_ACC | RF_IN_Y
+.end
+
+
+
+.begin TXY
+.note Transfer X to Y
+    .mode NONE
+        RF_OE | RF_WE | RF_OUT_X | RF_IN_Y
+.end
+
+
+.begin TYX
+.note Transfer Y to X
+    .mode NONE
+        RF_OE | RF_WE | RF_OUT_Y | RF_IN_X
+.end
+
+
+.begin TSA
+.note Transfer SP to ACC
+    .mode NONE
+        ALU_CLR | CARRY_CLR
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        RF_WE | RF_IN_ACC | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | MAR_SEL
+.end
+
+
+
+.begin TAS
+.note Transfer ACC to SP
+    .mode NONE
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+.begin SAX
+.note Swap ACC and X values (no change to ALU status)
+    .mode NONE
+        RF_OE | RF_WE | RF_OUT_ACC | RF_IN_TMP
+        RF_OE | RF_WE | RF_IN_ACC | RF_OUT_X
+        RF_OE | RF_WE | RF_IN_X | RF_OUT_TMP
+.end
+
+
+.begin SAY
+.note Swap ACC and X values (no change to ALU status)
+    .mode NONE
+        RF_OE | RF_WE | RF_OUT_ACC | RF_IN_TMP
+        RF_OE | RF_WE | RF_IN_ACC | RF_OUT_Y
+        RF_OE | RF_WE | RF_IN_Y | RF_OUT_TMP
+.end
+
+
+.begin SXY
+.note Swap X and Y values
+    .mode NONE
+        RF_OE | RF_WE | RF_OUT_X| RF_IN_TMP
+        RF_OE | RF_WE | RF_IN_X | RF_OUT_Y
+        RF_OE | RF_WE | RF_IN_Y | RF_OUT_TMP
+.end
+
+
+.begin SEC
+.note Set carry flag
+    .mode NONE
+        CARRY_SET
+.end
+
+
+
+.begin CLC
+.note Clear carry flag
+    .mode NONE
+        CARRY_CLR
+.end
+
+
+
+.begin ADC
+.note Add ACC with carry
+    .mode IMM
+        ALU_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode IND
+        ALU_CLR | RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode INDX
+        ALU_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | CONST_OE_00
+        ALU_OE | RF_WE | RF_IN_ACC
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_X
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        ALU_CLR
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_H
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode INDY
+        ALU_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | CONST_OE_00
+        ALU_OE | RF_WE | RF_IN_ACC
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_Y
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        ALU_CLR
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_H
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin ADX
+.note Add X to ACC
+    .mode NONE
+        ALU_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | RF_OE | RF_OUT_X
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin ADY
+.note Add Y to ACC
+    .mode NONE
+        ALU_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | RF_OE | RF_OUT_Y
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin SBC
+.note Subtract from ACC with carry
+    .mode IMM
+        ALU_EN | ALU_NAND
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_EN | ALU_SUB | RAM_OE | PC_COUNT
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode IND
+        ALU_EN | ALU_NAND
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_EN | ALU_SUB | RAM_OE | MAR_SEL 
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode INDX
+        ALU_CLR
+        ALU_EN
+        ALU_OE | RF_WE | RF_IN_TMP
+        ALU_CLR | CARRY_CLR         ; carry saved to TMP
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_EN | RF_OE | RF_OUT_X   ; alu_hold = PL + X
+        ALU_OE | MARL_L
+        ALU_CLR
+        ALU_EN | RAM_OE | PC_COUNT  ; alu_hold = PH + carry
+        ALU_OE | MARL_H
+        ALU_CLR | CARRY_CLR
+        ALU_EN | CONST_OE_FF
+        ALU_EN | RF_OE | RF_OUT_TMP
+        ALU_CLR                     ; carry restored
+        ALU_EN | ALU_NAND
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | CONST_OE_FF        
+        ALU_EN | ALU_SUB | RAM_OE | MAR_SEL 
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode INDY
+        ALU_CLR
+        ALU_EN
+        ALU_OE | RF_WE | RF_IN_TMP
+        ALU_CLR | CARRY_CLR         ; carry saved to TMP
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_EN | RF_OE | RF_OUT_Y   ; alu_hold = PL + X
+        ALU_OE | MARL_L
+        ALU_CLR
+        ALU_EN | RAM_OE | PC_COUNT  ; alu_hold = PH + carry
+        ALU_OE | MARL_H
+        ALU_CLR | CARRY_CLR
+        ALU_EN | CONST_OE_FF
+        ALU_EN | RF_OE | RF_OUT_TMP
+        ALU_CLR                     ; carry restored
+        ALU_EN | ALU_NAND
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | CONST_OE_FF        
+        ALU_EN | ALU_SUB | RAM_OE | MAR_SEL 
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin SBX
+.note Subtract X from ACC
+    .mode NONE
+        ALU_EN | ALU_NAND
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_EN | ALU_SUB | RF_OE | RF_OUT_X
+        ALU_OE | RF_WE | RF_IN_ACC              
+.end
+
+
+
+.begin SBY
+.note Subtract Y from ACC
+    .mode NONE
+        ALU_EN | ALU_NAND
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_EN | ALU_SUB | RF_OE | RF_OUT_X
+        ALU_OE | RF_WE | RF_IN_ACC       
+.end
+
+
+
+.begin NDA 
+.note NAND ACC
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | ALU_EN | PC_COUNT
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin NDX
+.note ACC NAND X => ACC
+    .mode NONE
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_X
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin NDY
+.note ACC NAND Y => ACC
+    .mode NONE
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_Y
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin ASR
+.note Arithmetic shift right ACC by one
+    .mode NONE
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ASR_OE | RF_WE | RF_IN_ACC
+.end
+
+
+.begin ASR2
+.note ASR x2
+    .mode NONE
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ASR_OE | RF_WE | RF_IN_ACC
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ASR_OE | RF_WE | RF_IN_ACC
+.end
+
+
+.begin ASR4
+.note ASR x4
+    .mode NONE
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ASR_OE | RF_WE | RF_IN_ACC
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ASR_OE | RF_WE | RF_IN_ACC
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ASR_OE | RF_WE | RF_IN_ACC
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ASR_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin AND
+.note Logical AND ACC
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | RAM_OE | PC_COUNT
+        ALU_EN | CONST_OE_FF | ALU_NAND
+        ALU_OE | RF_WE | RF_IN_ACC
+    
+    .mode IND
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_EN | ALU_NAND | MAR_SEL | RAM_OE
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin ORA
+.note Logical OR ACC
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_OE | RF_WE | RF_IN_ACC
+        ALU_EN | ALU_NAND | RAM_OE | PC_COUNT
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_ACC
+        ALU_OE | RF_WE | RF_IN_ACC
+    
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_OE | RF_WE | RF_IN_ACC
+        ALU_EN | ALU_NAND | RAM_OE | MAR_SEL
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_ACC
+        ALU_OE | RF_WE | RF_IN_ACC
+.end    
+
+
+
+.begin NTA
+.note Logical NOT ACC
+    .mode NONE
+        ALU_EN | ALU_NAND
+        ALU_EN | RF_OE | RF_OUT_ACC | ALU_NAND
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin XOR
+.note Logical XOR ACC
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC             ; a = ACC
+        ALU_EN | RAM_OE | ALU_NAND              ; a = ~(a & IMM)
+        ALU_OE | RF_WE | RF_IN_TMP              ; TMP = a
+        ALU_EN | RF_OE | RF_OUT_ACC | ALU_NAND  ; a = ~(TMP & ACC)
+        ALU_OE | RF_WE | RF_IN_ACC              ; ACC = a     ACC now contains ~(~(ACC & IMM) & ACC)
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_TMP             ; a = TMP
+        ALU_EN | RAM_OE | ALU_NAND | PC_COUNT   ; a = ~(TMP & IMM)    a now contains ~(~(ACC & IMM) & IMM)
+        ALU_EN | RF_OE | RF_OUT_ACC | ALU_NAND  ; a = ACC ^ IMM
+        ALU_OE | RF_WE | RF_IN_ACC
+    
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL               ; B value from RAM[ind] -> alu_hold
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_ACC  ; alu_hold = ~(ACC & B)
+        ALU_OE | RF_WE | RF_IN_TMP              ; TMP = ~(ACC & B)
+        ALU_EN | RF_OE | RF_OUT_ACC | ALU_NAND  ; a = ~(TMP & ACC)
+        ALU_OE | RF_WE | RF_IN_ACC              ; ACC = a     ACC now contains ~(~(ACC & IMM) & ACC)
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_TMP             ; a = TMP
+        ALU_EN | RAM_OE | ALU_NAND  | MAR_SEL   ; a = ~(TMP & B)    a now contains ~(~(ACC & IMM) & IMM)
+        ALU_EN | RF_OE | RF_OUT_ACC | ALU_NAND  ; a = ACC ^ B
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+.begin JMP
+.note Unconditional Jump
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        JMP | MAR_SEL
+    
+    .mode DIND
+        RAM_OE | MARL_L
+        ALU_CLR | CARRY_SET
+        RAM_OE | ALU_EN | PC_COUNT
+        RAM_OE | MARL_H
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP
+        ALU_OE | MARL_L
+        RAM_OE | MAR_SEL | MARL_H
+        RF_OE | RF_OUT_TMP | MARL_L | PC_COUNT
+        JMP | MAR_SEL
+.end
+
+
+
+.begin JEQ
+.note Jump if zero flag set
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        JEQ | MAR_SEL
+.end
+
+
+
+.begin JCS
+.note Jump if carry flag set
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        JCS | MAR_SEL
+.end
+
+
+
+.begin RSP
+.note Reset stack pointer to 0xFE
+    .mode NONE
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | ALU_NAND
+        CARRY_CLR
+        ALU_EN | ALU_SUB
+        ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+
+.begin SPA
+.note Add IMM value to stack pointer. Useful for popping + discarding values quickly from the stack.
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+.begin PHA
+.note Push ACC to stack
+    .mode NONE
+        ALU_EN | ALU_NAND
+        CARRY_CLR
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L
+        RF_OE | RF_OUT_ACC | RAM_WE | MAR_SEL
+.end
+
+
+
+.begin PHX
+.note Push X to stack
+    .mode NONE
+        ALU_EN | ALU_NAND
+        CARRY_CLR
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L
+        RF_OE | RF_OUT_X | RAM_WE | MAR_SEL
+.end
+
+
+
+.begin PHY
+.note Push Y to stack
+    .mode NONE
+        ALU_EN | ALU_NAND
+        CARRY_CLR
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L
+        RF_OE | RF_OUT_Y | RAM_WE | MAR_SEL
+.end
+
+
+
+.begin PLA
+.note Pop stack into ACC
+    .mode NONE
+        ALU_CLR | CARRY_SET
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+        ALU_OE | MARL_L
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin PLX
+.note Pop stack into X
+    .mode NONE
+        ALU_CLR | CARRY_SET
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+        ALU_OE | MARL_L
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_X
+.end
+
+
+
+.begin PLY
+.note Pop stack into Y
+    .mode NONE
+        ALU_CLR | CARRY_SET
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+        ALU_OE | MARL_L
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_Y
+.end
+
+
+
+.begin JSR                      ; stores PC. Must PC_COUNT x2 on RTS)
+.note Jump Subroutine
+    .mode IND  
+        CONST_OE_FF | MARL_L            ; 0xFFFF->MAR
+        CONST_OE_FF | MARL_H            ;  "
+        ALU_EN | ALU_NAND               ; -1 -> ALU
+        CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL       ; -1 + SPL -> ALU
+        RAM_OE | MAR_SEL | MARL_L       ; SPL -> MARL
+        RAM_WE | MAR_SEL | PCOUT_L      ; PCL -> RAM[SP]
+        ALU_OE | MARL_L                 ; SPL-1 -> MARL
+        CARRY_CLR
+        RAM_WE | MAR_SEL | PCOUT_H      ; PCH -> RAM[SP-1]
+        ALU_EN | CONST_OE_FF            ; SP-2 -> ALU
+        CONST_OE_FF | MARL_L            ; 0xFFFF -> MAR
+        ALU_OE | RAM_WE | MAR_SEL       ; ALU -> SPL
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        JMP | MAR_SEL
+.end
+
+
+
+.begin RTS
+.note Return Subroutine
+    .mode NONE     ; has no arguments, but needs to PC_COUNT x2 for alignment
+        ALU_CLR | CARRY_SET
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        RAM_OE | MAR_SEL | ALU_EN       ; SP + 1 -> ALU
+        ALU_OE | MARL_L
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; PCH -> TMP
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L                 ; SP + 1 -> ALU
+        RAM_OE | MAR_SEL | MARL_L       ; PCL -> MARL
+        RF_OE | RF_OUT_TMP | MARL_H     ; PCH -> MARH
+        JMP | MAR_SEL
+        CONST_OE_FF | MARL_L | PC_COUNT ; PC++
+        CONST_OE_FF | MARL_H | PC_COUNT ; PC++
+        ALU_OE | RAM_WE | MAR_SEL       ; ALU -> SP
+.end
+
+
+
+.begin LSA
+.note Load stack argument from ((current_sp + 1) + IMM) into ACC
+    .mode IMM
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_CLR | CARRY_SET
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_ACC
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+
+    .mode SRR
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_CLR | CARRY_SET       
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L
+        ALU_CLR
+        RAM_OE | MAR_SEL | MARL_H
+        RF_OE | RF_OUT_TMP | MARL_L
+        RAM_OE | MAR_SEL | ALU_EN
+        ALU_OE | RF_IN_ACC | RF_WE
+    
+    .mode SRIX
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_CLR | CARRY_SET       
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; PLOW -> TMP
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L                         ; MAR is pointing to PHIGH 
+        ALU_CLR
+        RF_OE | RF_OUT_TMP | ALU_EN
+        RF_OE | RF_OUT_X | ALU_EN 
+        ALU_OE | RF_WE | RF_IN_TMP              ; PLOW + X -> TMP
+        ALU_CLR
+        RAM_OE | MAR_SEL | ALU_EN               ; PHIGH + carry -> alu_hold
+        ALU_OE | MARL_H
+        RF_OE | RF_OUT_TMP | MARL_L
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC
+
+    .mode SRIY
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_CLR | CARRY_SET       
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; PLOW -> TMP
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L                         ; MAR is pointing to PHIGH 
+        ALU_CLR
+        RF_OE | RF_OUT_TMP | ALU_EN
+        RF_OE | RF_OUT_Y | ALU_EN 
+        ALU_OE | RF_WE | RF_IN_TMP              ; PLOW + X -> TMP
+        ALU_CLR
+        RAM_OE | MAR_SEL | ALU_EN               ; PHIGH + carry -> alu_hold
+        ALU_OE | MARL_H
+        RF_OE | RF_OUT_TMP | MARL_L
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RF_WE | RF_IN_ACC
+.end
+
+
+
+.begin SSA
+.note Store stack argument from ACC to ((current_sp + 1) + IMM)
+    .mode IMM
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_CLR | CARRY_SET
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        RAM_WE | MAR_SEL | RF_OE | RF_OUT_ACC
+
+    .mode SRR
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_CLR | CARRY_SET       
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L
+        ALU_CLR
+        RAM_OE | MAR_SEL | MARL_H
+        RF_OE | RF_OUT_TMP | MARL_L
+        RAM_WE | MAR_SEL | RF_OE | RF_OUT_ACC
+
+    .mode SRIX
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_CLR | CARRY_SET       
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; PLOW -> TMP
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L                         ; MAR is pointing to PHIGH 
+        ALU_CLR
+        RF_OE | RF_OUT_TMP | ALU_EN
+        RF_OE | RF_OUT_X | ALU_EN 
+        ALU_OE | RF_WE | RF_IN_TMP              ; PLOW + X -> TMP
+        ALU_CLR
+        RAM_OE | MAR_SEL | ALU_EN               ; PHIGH + carry -> alu_hold
+        ALU_OE | MARL_H
+        RF_OE | RF_OUT_TMP | MARL_L
+        RAM_WE | MAR_SEL | RF_OE | RF_OUT_ACC
+
+    .mode SRIY
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_CLR | CARRY_SET       
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | MARL_L
+        RAM_OE | MAR_SEL | RF_WE | RF_IN_TMP    ; PLOW -> TMP
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L                         ; MAR is pointing to PHIGH 
+        ALU_CLR
+        RF_OE | RF_OUT_TMP | ALU_EN
+        RF_OE | RF_OUT_Y | ALU_EN 
+        ALU_OE | RF_WE | RF_IN_TMP              ; PLOW + X -> TMP
+        ALU_CLR
+        RAM_OE | MAR_SEL | ALU_EN               ; PHIGH + carry -> alu_hold
+        ALU_OE | MARL_H
+        RF_OE | RF_OUT_TMP | MARL_L
+        RAM_WE | MAR_SEL | RF_OE | RF_OUT_ACC
+.end
+
+
+.begin CPA
+.note Compare with ACC. Result not stored.
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        CARRY_SET
+        ALU_EN | ALU_SUB | RAM_OE | PC_COUNT
+    
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        CARRY_SET
+        ALU_EN | ALU_SUB | RAM_OE | MAR_SEL
+.end
+
+
+
+.begin CPX
+.note Compare with X. Result not stored.
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_X
+        CARRY_SET
+        ALU_EN | ALU_SUB | RAM_OE | PC_COUNT
+    
+    .mode IND
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_X
+        CARRY_SET
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_EN | ALU_SUB | MAR_SEL | RAM_OE
+.end
+
+
+
+.begin CPY
+.note Compare with Y. Result not stored.
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_Y
+        CARRY_SET
+        ALU_EN | ALU_SUB | RAM_OE | PC_COUNT
+
+    .mode IND
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_Y
+        CARRY_SET
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_EN | ALU_SUB | MAR_SEL | RAM_OE
+.end
+
+
+
+.begin STZ
+.note Store zero to address
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        RAM_WE | MAR_SEL
+.end
+
+
+
+.begin BIT
+.note AND bit test with ACC. Result not stored. 
+    .mode IMM
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | RAM_OE | PC_COUNT
+        ALU_EN | ALU_NAND | CONST_OE_FF
+    
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | ALU_NAND | RAM_OE | MAR_SEL
+        ALU_EN | ALU_NAND | CONST_OE_FF
+.end
+
+
+
+.begin INR
+.note Increment remote address by 1
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_CLR | CARRY_SET
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+
+.begin DER
+.note Deincrement remote address by 1
+    .mode IND
+        ALU_EN | ALU_NAND
+        CARRY_CLR
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+
+.begin PHI
+.note Push immediate to stack
+    .mode IMM
+        ALU_EN | ALU_NAND
+        CARRY_CLR
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+        CARRY_SET
+        ALU_EN
+        ALU_OE | MARL_L
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | PC_COUNT
+        ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+.begin SVC
+.note Save carry to stash RAM[0xFF00]
+    .mode NONE
+        ALU_CLR
+        ALU_EN
+        CONST_OE_FF | MARL_H
+        CONST_OE_00 | MARL_L
+        ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+.begin LDC
+.note Load carry from stash RAM[0xFF00]
+    .mode NONE
+        CARRY_CLR
+        ALU_EN | ALU_NAND
+        CONST_OE_FF | MARL_H
+        CONST_OE_00 | MARL_L
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_CLR
+.end
+
+
+.begin RLA
+.note Logical roll left ACC by 1
+    .mode NONE
+        ALU_CLR                         ; first store ~(carry) to TMP
+        ALU_EN
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_OE | RF_WE | RF_IN_TMP      ; TMP now contains ~(carry)
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RF_OE | RF_OUT_ACC
+        ALU_EN | RF_OE | RF_OUT_ACC       ; ACC = A << 1, carry now contains the shifted-out bit
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_TMP
+        ALU_OE | RF_WE | RF_IN_ACC        ; ACC -> A
+.end       
+
+
+.begin RLM
+.note Logical roll left indirect address
+    .mode IND
+        RAM_OE | MARL_L | PC_COUNT
+        RAM_OE | MARL_H | PC_COUNT
+        ALU_CLR                         ; first store ~(carry) to TMP
+        ALU_EN
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_OE | RF_WE | RF_IN_TMP      ; TMP now contains ~(carry)
+        ALU_CLR | CARRY_CLR
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | RAM_OE | MAR_SEL       ; ACC = A << 1, carry now contains the shifted-out bit
+        ALU_EN | ALU_NAND | CONST_OE_FF
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_TMP
+        ALU_OE | RAM_WE | MAR_SEL
+.end
+
+
+.begin PHC
+.note Push carry to stack
+    .mode NONE
+        ALU_CLR
+        ALU_EN
+        ALU_OE | RF_WE | RF_IN_TMP
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        RAM_OE | MAR_SEL | MARL_L
+        ALU_OE | MAR_SEL | RAM_WE
+        ALU_EN | ALU_NAND
+        CONST_OE_FF | MARL_L
+        ALU_EN | MAR_SEL | RAM_OE
+        ALU_OE | MAR_SEL | RAM_WE
+        ALU_CLR | CARRY_CLR
+        ALU_EN | ALU_NAND
+        ALU_EN | RF_OE | RF_OUT_TMP
+.end
+
+
+.begin PLC
+.note Pull carry from stack
+    .mode NONE
+        ALU_OE | RF_WE | RF_IN_TMP
+        ALU_CLR | CARRY_SET
+        CONST_OE_FF | MARL_L
+        CONST_OE_FF | MARL_H
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_OE | RAM_WE | MAR_SEL
+        ALU_OE | MARL_L
+        ALU_CLR | CARRY_CLR
+        ALU_EN | ALU_NAND
+        ALU_EN | RAM_OE | MAR_SEL
+        ALU_EN | ALU_NAND
+        ALU_EN | ALU_NAND | RF_OE | RF_OUT_TMP
+        ALU_EN | ALU_NAND | CONST_OE_FF
+.end
+
+;                             ======= END OPCODE DEFINITIONS =======
